@@ -61,6 +61,21 @@ class EcomScraper:
             
             soup = BeautifulSoup(self.driver.page_source, "html.parser")
             data = self._parse_html(soup)
+
+            # If no title or price is found, take a screenshot to help debug (e.g., captcha)
+            if data["name"] == "Unknown Product" or data["price"] == "N/A":
+                import platform
+                if platform.system() == "Linux":
+                    try:
+                        import streamlit as st
+                        screenshot = self.driver.get_screenshot_as_png()
+                        st.image(screenshot, caption=f"Debug: No title/price found for {url}", use_column_width=True)
+                        print(f"Debug: Screenshot taken for {url} due to missing title/price.")
+                    except ImportError:
+                        print("Streamlit not installed, cannot display screenshot.")
+                    except Exception as e:
+                        print(f"Failed to capture or display screenshot for {url}: {e}")
+
             data["reviews"] = self._scrape_reviews(soup)
             return data
         except Exception as e:
