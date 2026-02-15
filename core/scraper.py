@@ -60,9 +60,11 @@ class EcomScraper:
             time.sleep(2)
             
             soup = BeautifulSoup(self.driver.page_source, "html.parser")
-            data = self._parse_html(soup)
 
             # --- TITLE EXTRACTION ---
+            data = self._parse_html(soup)
+            data["reviews"] = self._scrape_reviews(soup)
+            return data
         except Exception as e:
             print(f"Error scraping {url}: {e}")
             return None
