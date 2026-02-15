@@ -1,0 +1,80 @@
+import time
+import sys
+import io
+from core.database_manager import DatabaseManager
+from core.scraper import EcomScraper
+from core.notifier import EmailNotifier
+from config.settings import EMAIL_SENDER, EMAIL_PASSWORD
+
+def check_alerts():
+    print("Starting Price Alert Monitor... (Press Ctrl+C to stop)", flush=True)
+    
+    while True:
+        try:
+            print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Checking alerts...")
+            db = DatabaseManager()
+            if not db.connect():
+                print("Failed to connect to DB. Retrying in 1 minute.")
+                time.sleep(60)
+                continue
+            else:
+                db.create_tables()
+
+            # Initialize Notifier
+            notifier = EmailNotifier(EMAIL_SENDER, EMAIL_PASSWORD)
+
+            alerts = db.get_pending_alerts()
+            if not alerts:
+                # print("No pending alerts found.")
+                pass
+            else:
+                print(f"Checking {len(alerts)} items...")
+                
+                scraper = EcomScraper()
+                
+                for alert in alerts:
+                    alert_id, url, target_price, recipient_email = alert
+                    
+                    try:
+                        data = scraper.scrape_product(url)
+                        if not data:
+                            continue
+                            
+                        current_price_str = data.get('price', '0')
+                        # cleanup price (remove currency symbols)
+                        clean_price = ''.join(c for c in current_price_str if c.isdigit() or c == '.')
+                        
+                        if not clean_price:
+                            continue
+                            
+                        current_price = float(clean_price)
+                        product_name = data.get('name', 'Unknown Product')
+                        
+                        if current_price <= float(target_price):
+                            print(f"📉 Price Drop: {current_price} (Target: {target_price})")
+                            
+                            # Try to send email
+                            if notifier.send_price_alert(recipient_email, product_name, current_price, target_price, url):
+                                print("Email sent.")
+                                db.mark_alert_sent(alert_id)
+                        
+                    except Exception as e:
+                        print(f"Error checking alert {alert_id}: {e}")
+                        
+                    time.sleep(2)
+
+                scraper.close()
+            
+            db.close()
+            
+        except Exception as e:
+            print(f"Critical Error: {e}")
+            
+        print("Sleeping for 6 hours...")
+        time.sleep(21600)
+
+if __name__ == "__main__":
+    try:
+        check_alerts()
+    except KeyboardInterrupt:
+        print("\nMonitor stopped.")
