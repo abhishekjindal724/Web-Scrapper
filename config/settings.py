@@ -10,9 +10,11 @@ try:
     DB_PASSWORD = st.secrets["DB_PASSWORD"]
     DB_NAME = st.secrets["DB_NAME"]
 except (FileNotFoundError, KeyError):
+    # Use environment variables or empty strings (for safety)
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_USER = os.getenv("DB_USER", "root")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "Kiranrani@1") 
+    # DB_PASSWORD should be set in .env or secrets!
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "") 
     DB_NAME = "ecommerce_db"
 
 # Scraper Configuration
@@ -34,4 +36,5 @@ try:
     EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
 except (FileNotFoundError, KeyError):
     EMAIL_SENDER = "abhishekjindal724@gmail.com"
-    EMAIL_PASSWORD = "phys eorb vaed pdrn"
+    # Password removed for security. Set 'EMAIL_PASSWORD' in secrets.toml or environment variables.
+    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
