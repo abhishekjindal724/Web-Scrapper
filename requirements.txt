@@ -5,3 +5,4 @@ pandas
 mysql-connector-python
 textblob
 streamlit
+altair<5
