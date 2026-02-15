@@ -1,11 +1,19 @@
 import os
 
+import streamlit as st
+
 # Database Configuration
 # NOTE: Update these with your actual MySQL credentials
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "Kiranrani@1") 
-DB_NAME = "ecommerce_db"
+try:
+    DB_HOST = st.secrets["DB_HOST"]
+    DB_USER = st.secrets["DB_USER"]
+    DB_PASSWORD = st.secrets["DB_PASSWORD"]
+    DB_NAME = st.secrets["DB_NAME"]
+except (FileNotFoundError, KeyError):
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_USER = os.getenv("DB_USER", "root")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "Kiranrani@1") 
+    DB_NAME = "ecommerce_db"
 
 # Scraper Configuration
 USER_AGENTS = [
@@ -21,5 +29,9 @@ DELAY_RANGE = (2, 5)
 HEADLESS = True
 
 # Email Credentials
-EMAIL_SENDER = "abhishekjindal724@gmail.com"
-EMAIL_PASSWORD = "phys eorb vaed pdrn"
+try:
+    EMAIL_SENDER = st.secrets.get("EMAIL_SENDER", "abhishekjindal724@gmail.com")
+    EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
+except (FileNotFoundError, KeyError):
+    EMAIL_SENDER = "abhishekjindal724@gmail.com"
+    EMAIL_PASSWORD = "phys eorb vaed pdrn"

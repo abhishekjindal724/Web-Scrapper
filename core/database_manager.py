@@ -5,27 +5,61 @@ class DatabaseManager:
     def __init__(self):
         self.conn = None
         self.cursor = None
+        self.db_type = "mysql" # Default
 
     def connect(self):
-        """Establishes a connection to the MySQL database."""
+        """Establishes a connection to the database (MySQL or SQLite fallback)."""
         try:
-            # First connect without database to create it if it doesn't exist
+            # Try connecting to MySQL
             self.conn = mysql.connector.connect(
                 host=DB_HOST,
                 user=DB_USER,
                 password=DB_PASSWORD
             )
             self.cursor = self.conn.cursor()
-            
-            # Create database if not exists
             self.cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-            
-            # Switch to the database
             self.conn.database = DB_NAME
-            
+            self.db_type = "mysql"
             return True
-        except mysql.connector.Error as err:
-            print(f"Error connecting to database: {err}")
+        except (mysql.connector.Error, Exception):
+            # Fallback to SQLite
+            try:
+                import sqlite3
+                self.conn = sqlite3.connect('ecommerce.db')
+                self.cursor = self.conn.cursor()
+                self.db_type = "sqlite"
+                return True
+            except Exception as e:
+                print(f"Database connection failed: {e}")
+                return False
+
+    def _execute(self, query, params=None):
+        """Executes a query handling DB-specific placeholder syntax."""
+        if not self.cursor:
+            return None
+        
+        try:
+            if self.db_type == "sqlite":
+                # Convert MySQL %s placeholder to SQLite ?
+                query = query.replace("%s", "?")
+                # SQLite doesn't support AUTO_INCREMENT in CREATE TABLE nicely safely via replace,
+                # but our CREATE queries use AUTO_INCREMENT which is MySQL specific.
+                # SQLite uses INTEGER PRIMARY KEY for auto increment behavior.
+                query = query.replace("AUTO_INCREMENT", "") 
+                # Also TIMESTAMP DEFAULT CURRENT_TIMESTAMP is supported in SQLite but let's be safe.
+                
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
+                
+            if self.db_type == "sqlite":
+                # Enable foreign keys or strictness if needed, but for now simple commit
+                self.conn.commit() 
+            return True
+        except Exception as e:
+            # print(f"Query Error: {e}") 
+            # Suppress query errors for cleaner output, or log safely
             return False
 
     def create_tables(self):
@@ -33,9 +67,13 @@ class DatabaseManager:
         if not self.conn:
             return
 
-        query = """
+        # Common types suitable for both
+        # SQLite: INTEGER PRIMARY KEY is auto-increment
+        pk = "INT AUTO_INCREMENT PRIMARY KEY" if self.db_type == "mysql" else "INTEGER PRIMARY KEY"
+        
+        query = f"""
         CREATE TABLE IF NOT EXISTS products (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id {pk},
             name VARCHAR(512),
             price VARCHAR(50),
             availability VARCHAR(50),
@@ -44,36 +82,32 @@ class DatabaseManager:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
-        alerts_query = """
+        alerts_query = f"""
         CREATE TABLE IF NOT EXISTS alerts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id {pk},
             product_url TEXT,
             target_price DECIMAL(10, 2),
             email VARCHAR(255),
-            is_notified BOOLEAN DEFAULT FALSE,
+            is_notified BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
-        try:
-            self.cursor.execute(query)
-            self.cursor.execute(alerts_query)
-            self.conn.commit()
-        except mysql.connector.Error as err:
-            print(f"Error creating tables: {err}")
+        # Note: SQLite uses 0/1 for booleans
+        
+        self._execute(query)
+        self._execute(alerts_query)
 
     def insert_product(self, data):
         """Inserts a scraped product into the database."""
-        if not self.conn or not self.cursor:
+        if not self.conn:
             return
 
-        # Check for duplicates (same name and price)
+        # Check for duplicates
         check_query = "SELECT id FROM products WHERE name = %s AND price = %s LIMIT 1"
-        try:
-            self.cursor.execute(check_query, (data.get('name', 'Unknown'), data.get('price', 'N/A')))
-            if self.cursor.fetchone():
-                return
-        except mysql.connector.Error as err:
-            print(f"Error checking duplicates: {err}")
+        self._execute(check_query, (data.get('name', 'Unknown'), data.get('price', 'N/A')))
+        
+        if self.cursor.fetchone():
+            return
 
         query = "INSERT INTO products (name, price, availability, rating, sentiment_score) VALUES (%s, %s, %s, %s, %s)"
         values = (
@@ -83,47 +117,32 @@ class DatabaseManager:
             data.get('rating', 'N/A'),
             data.get('sentiment_score', 0.0)
         )
-        try:
-            self.cursor.execute(query, values)
-            self.conn.commit()
-        except mysql.connector.Error as err:
-            print(f"Error inserting product: {err}")
+        if self._execute(query, values) and self.db_type == "mysql":
+             self.conn.commit()
 
     def add_alert(self, url, target_price, email):
         """Adds a new price alert to the database."""
-        if not self.conn:
-            return False
         query = "INSERT INTO alerts (product_url, target_price, email) VALUES (%s, %s, %s)"
-        try:
-            self.cursor.execute(query, (url, target_price, email))
-            self.conn.commit()
+        if self._execute(query, (url, target_price, email)):
+            if self.db_type == "mysql": self.conn.commit()
             return True
-        except mysql.connector.Error as err:
-            print(f"Error adding alert: {err}")
-            return False
+        return False
 
     def get_pending_alerts(self):
         """Fetches all alerts that have not yet been notified."""
-        if not self.conn:
-            return []
-        query = "SELECT id, product_url, target_price, email FROM alerts WHERE is_notified = FALSE"
-        try:
-            self.cursor.execute(query)
-            return self.cursor.fetchall()
-        except mysql.connector.Error as err:
-            print(f"Error fetching alerts: {err}")
-            return []
+        # SQLite uses 0 for False
+        val = "FALSE" if self.db_type == "mysql" else "0"
+        query = f"SELECT id, product_url, target_price, email FROM alerts WHERE is_notified = {val}"
+        
+        self._execute(query)
+        return self.cursor.fetchall()
 
     def mark_alert_sent(self, alert_id):
         """Marks an alert as sent (notified)."""
-        if not self.conn:
-            return
-        query = "UPDATE alerts SET is_notified = TRUE WHERE id = %s"
-        try:
-            self.cursor.execute(query, (alert_id,))
-            self.conn.commit()
-        except mysql.connector.Error as err:
-            print(f"Error updating alert: {err}")
+        val = "TRUE" if self.db_type == "mysql" else "1"
+        query = f"UPDATE alerts SET is_notified = {val} WHERE id = %s"
+        if self._execute(query, (alert_id,)):
+             if self.db_type == "mysql": self.conn.commit()
 
     def close(self):
         """Closes the database connection."""

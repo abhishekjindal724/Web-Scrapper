@@ -15,7 +15,14 @@ class EcomScraper:
     def _init_driver(self):
         """Initializes the Selenium WebDriver with anti-blocking options."""
         options = Options()
-        if HEADLESS:
+        
+        # Check if running on Linux (likely Streamlit Cloud)
+        import platform
+        if platform.system() == "Linux":
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+        elif HEADLESS:
             options.add_argument("--headless")
         
         # Random User-Agent
@@ -23,7 +30,6 @@ class EcomScraper:
         options.add_argument(f"user-agent={user_agent}")
         
         options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
         options.add_argument("--window-size=1920,1080")
         
         # Suppress logs
