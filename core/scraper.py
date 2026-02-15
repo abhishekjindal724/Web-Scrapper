@@ -22,6 +22,12 @@ class EcomScraper:
             options.add_argument("--headless")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-gpu")
+            
+            # On Streamlit Cloud/Linux, chromium and chromium-driver are installed via packages.txt
+            # We don't need webdriver_manager here, as it conflicts with the system driver.
+            return webdriver.Chrome(options=options)
+            
         elif HEADLESS:
             options.add_argument("--headless")
         
@@ -35,7 +41,7 @@ class EcomScraper:
         # Suppress logs
         options.add_argument("--log-level=3")
 
-        # Use webdriver_manager to automatically handle the driver executable
+        # Use webdriver_manager to automatically handle the driver executable regarding usage on Windows/Mac
         service = Service(ChromeDriverManager().install())
         return webdriver.Chrome(service=service, options=options)
 
