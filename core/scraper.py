@@ -62,22 +62,7 @@ class EcomScraper:
             soup = BeautifulSoup(self.driver.page_source, "html.parser")
             data = self._parse_html(soup)
 
-            # If no title or price is found, take a screenshot to help debug (e.g., captcha)
-            if data["name"] == "Unknown Product" or data["price"] == "N/A":
-                import platform
-                if platform.system() == "Linux":
-                    try:
-                        import streamlit as st
-                        screenshot = self.driver.get_screenshot_as_png()
-                        st.image(screenshot, caption=f"Debug: No title/price found for {url}", use_column_width=True)
-                        print(f"Debug: Screenshot taken for {url} due to missing title/price.")
-                    except ImportError:
-                        print("Streamlit not installed, cannot display screenshot.")
-                    except Exception as e:
-                        print(f"Failed to capture or display screenshot for {url}: {e}")
-
-            data["reviews"] = self._scrape_reviews(soup)
-            return data
+            # --- TITLE EXTRACTION ---
         except Exception as e:
             print(f"Error scraping {url}: {e}")
             return None
@@ -134,19 +119,32 @@ class EcomScraper:
         }
 
     def _scrape_reviews(self, soup):
-        """
-        Extracts top reviews from the product page.
-        Returns a list of review texts.
-        """
+        """Extracts text reviews from the product page."""
         reviews = []
-        # Amazon review bodies
-        review_elements = soup.select("div[data-hook='review'] span[data-hook='review-body'], .review-text-content")
+        try:
+            # Scroll down to load reviews (dynamic loading)
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
+            time.sleep(1) # Wait for potential lazy load
+            
+            # Update soup after scroll
+            soup = BeautifulSoup(self.driver.page_source, "html.parser")
+
+            # Amazon review text selectors
+            review_elements = soup.select('div[data-hook="review-collapsed"]')
+            
+            if not review_elements:
+                 # Try alternative selector
+                 review_elements = soup.select('span[data-hook="review-body"] span')
+
+            for el in review_elements[:10]: # Limit to 10 reviews
+                text = el.get_text().strip()
+                if text:
+                    reviews.append(text)
+            
+            print(f"Scraped {len(reviews)} reviews.")
+        except Exception as e:
+            print(f"Error scraping reviews: {e}")
         
-        for rev in review_elements[:5]: # Top 5 reviews
-            text = rev.text.strip()
-            if text:
-                reviews.append(text)
-                
         return reviews
 
     def _random_delay(self):
