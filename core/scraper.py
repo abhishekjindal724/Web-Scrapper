@@ -65,6 +65,13 @@ class EcomScraper:
 
             # --- TITLE EXTRACTION ---
             data = self._parse_html(soup)
+            
+            # DEBUG: Capture screenshot if data is missing (Anti-Bot check)
+            if data["name"] == "Unknown Product":
+                print("Potential Bot Block detected. Taking screenshot...")
+                screenshot = self.driver.get_screenshot_as_png()
+                data["debug_screenshot"] = screenshot
+            
             data["reviews"] = self._scrape_reviews(soup)
             return data
         except Exception as e:
