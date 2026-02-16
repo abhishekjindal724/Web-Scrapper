@@ -131,22 +131,5 @@ def main():
         with st.expander("📊 View Raw Data (JSON)"):
             st.json(data)
 
-    # --- Admin Section (For Cloud Demo) ---
-    st.divider()
-    st.subheader("⚙️ Admin: Price Monitor")
-    st.write("Since Streamlit Cloud sleeps, use this button to manually trigger a price check for all saved alerts.")
-    if st.button("Run Price Monitor Now"):
-        with st.spinner("Checking all alerts..."):
-            try:
-                # Run the check_alerts logic once
-                from check_alerts import check_alerts_once
-                results = check_alerts_once()
-                st.success(f"Checked {results} alerts.")
-            except ImportError:
-                 # If check_alerts_once doesn't exist yet (I need to create it), fallback or error
-                 st.error("Monitor script not updated yet.")
-            except Exception as e:
-                st.error(f"Monitor failed: {e}")
-
 if __name__ == "__main__":
     main()
