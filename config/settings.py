@@ -15,7 +15,7 @@ except (FileNotFoundError, KeyError):
     DB_USER = os.getenv("DB_USER", "root")
     # DB_PASSWORD should be set in .env or secrets!
     DB_PASSWORD = os.getenv("DB_PASSWORD", "") 
-    DB_NAME = "ecommerce_db"
+    DB_NAME = os.getenv("DB_NAME", "ecommerce_db")
     
 # SSL Configuration (Required for most Cloud DBs like TiDB/Aiven)
 # We will pass this to mysql.connector
