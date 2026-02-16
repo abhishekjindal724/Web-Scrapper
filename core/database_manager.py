@@ -131,16 +131,20 @@ class DatabaseManager:
 
     def get_pending_alerts(self):
         """Fetches all alerts that have not yet been notified."""
-        # SQLite uses 0 for False
-        val = "FALSE" if self.db_type == "mysql" else "0"
+        # SQLite uses 0/1, MySQL uses 0/1 (often mapped to False/True keywords, but integer is safest)
+        val = 0 # Universal False for both SQLite and MySQL (TINYITY(1))
+        
         query = f"SELECT id, product_url, target_price, email FROM alerts WHERE is_notified = {val}"
         
+        print(f"Executing Query: {query}")
         self._execute(query)
-        return self.cursor.fetchall()
+        result = self.cursor.fetchall()
+        print(f"Found {len(result)} alerts.")
+        return result
 
     def mark_alert_sent(self, alert_id):
         """Marks an alert as sent (notified)."""
-        val = "TRUE" if self.db_type == "mysql" else "1"
+        val = 1 # Universal True
         query = f"UPDATE alerts SET is_notified = {val} WHERE id = %s"
         if self._execute(query, (alert_id,)):
              if self.db_type == "mysql": self.conn.commit()
