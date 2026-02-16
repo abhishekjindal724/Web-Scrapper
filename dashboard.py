@@ -35,6 +35,10 @@ def main():
                 
                 if not data:
                     status_text.error("Failed to scrape data. Check the URL.")
+                elif data.get("name") == "Unknown Product":
+                    status_text.warning("⚠️ Amazon blocked the request (Anti-Bot). Try again in a few seconds or use a different product.")
+                    st.session_state.scraped_data = data
+                    st.session_state.current_url = url
                 else:
                     status_text.success("Scraping Complete!")
                     time.sleep(0.5)
