@@ -16,6 +16,10 @@ except (FileNotFoundError, KeyError):
     # DB_PASSWORD should be set in .env or secrets!
     DB_PASSWORD = os.getenv("DB_PASSWORD", "") 
     DB_NAME = "ecommerce_db"
+    
+# SSL Configuration (Required for most Cloud DBs like TiDB/Aiven)
+# We will pass this to mysql.connector
+DB_SSL = {"ssl_disabled": False} if os.getenv("DB_SSL", "True") == "True" else {}
 
 # Scraper Configuration
 USER_AGENTS = [
