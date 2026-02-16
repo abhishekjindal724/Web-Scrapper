@@ -16,6 +16,10 @@ def check_alerts_once():
             print("Failed to connect to DB.")
             return 0
         
+        print(f"Connected to Database Type: {db.db_type}")
+        if db.db_type == "sqlite":
+            print("WARNING: Using SQLite database. Alerts will not trigger if not persistent!")
+
         # Ensure tables exist (just in case)
         db.create_tables()
 
