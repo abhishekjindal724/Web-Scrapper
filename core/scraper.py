@@ -134,18 +134,29 @@ class EcomScraper:
         reviews = []
         try:
             # Scroll down to load reviews (dynamic loading)
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
-            time.sleep(1) # Wait for potential lazy load
+            # Reviews are usually at the bottom, so we scroll significantly
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/1.5);")
+            time.sleep(1) 
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2) # Give it time to load the review text
             
             # Update soup after scroll
             soup = BeautifulSoup(self.driver.page_source, "html.parser")
 
-            # Amazon review text selectors
-            review_elements = soup.select('div[data-hook="review-collapsed"]')
+            # Amazon review text selectors (Updated for 2024/2025 layouts)
+            selectors = [
+                'div[data-hook="review-collapsed"]',
+                'span[data-hook="review-body"] span',
+                'div.a-expander-content.reviewText.review-text-content',
+                '.review-text-content span'
+            ]
             
-            if not review_elements:
-                 # Try alternative selector
-                 review_elements = soup.select('span[data-hook="review-body"] span')
+            review_elements = []
+            for selector in selectors:
+                found = soup.select(selector)
+                if found:
+                    review_elements = found
+                    break
 
             for el in review_elements[:10]: # Limit to 10 reviews
                 text = el.get_text().strip()
