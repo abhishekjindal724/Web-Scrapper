@@ -1,5 +1,5 @@
 import mysql.connector
-from config.settings import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+from config.settings import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL
 
 class DatabaseManager:
     def __init__(self):
@@ -14,7 +14,8 @@ class DatabaseManager:
             self.conn = mysql.connector.connect(
                 host=DB_HOST,
                 user=DB_USER,
-                password=DB_PASSWORD
+                password=DB_PASSWORD,
+                **DB_SSL
             )
             self.cursor = self.conn.cursor()
             self.cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")

@@ -94,8 +94,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nMonitor stopped.")
 
-if __name__ == "__main__":
-    try:
-        check_alerts()
-    except KeyboardInterrupt:
-        print("\nMonitor stopped.")
+
