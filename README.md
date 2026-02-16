@@ -62,14 +62,43 @@ EMAIL_PASSWORD = "your_app_password"
 
 ---
 
-## 🤖 How the Automation Works (@Devs)
+## 🧠 How it Works (Under the Hood)
 
-The `check_alerts.py` script is the heart of the automation.
-1.  **Trigger**: GitHub Actions runs this script every 6 hours (`.github/workflows/price_monitor.yml`).
-2.  **Database Connection**: Connects to TiDB using secrets injected by the environment.
-3.  **Query**: Fetches active alerts (`WHERE is_notified = 0`).
-4.  **Scrape**: Visits Amazon/Flipkart product pages using Headless Mode.
-5.  **Logic**: `if current_price <= target_price:` -> **Send Email** & **Mark Complete**.
+THIS IS A CLOUD-NATIVE APPLICATION.
+
+1.  **Frontend (Streamlit)**:
+    - Hosted on **Streamlit Community Cloud**.
+    - Handles user interactions (URL input, setting alerts).
+    - *Auto-Deployment*: Pushing to GitHub automatically updates the live app.
+
+2.  **Scraper (Selenium)**:
+    - Runs in **Headless Mode** (invisible Chrome browser).
+    - Rotates User-Agents to bypass anti-bot protections.
+    - Extracts Price, Rating, Availability, and Reviews.
+
+3.  **Brain (TiDB Serverless)**:
+    - A persistent **MySQL** database in the cloud.
+    - Stores your configured alerts securely (using SSL).
+    - Ensures data survives even when the app restarts.
+
+4.  **Robot (GitHub Actions)**:
+    - A **Cron Job** that wakes up every 6 hours.
+    - Runs `check_alerts.py` on a separate Ubuntu server.
+    - Checks if `Current Price <= Target Price`.
+    - Sends an email via Gmail SMTP if a deal is found.
+
+5.  **Intelligence (NLP)**:
+    - Uses `TextBlob` to analyze review sentiment.
+    - Gives a "Vibe Check" score (-1.0 to 1.0) on whether people like the product.
+
+## 🧪 Testing the Automation
+
+You don't need to wait 6 hours to test!
+1.  Go to **GitHub Actions** tab in your repo.
+2.  Select **Price Monitor** workflow.
+3.  Click **Run workflow**.
+    - *Green Checkmark ✅* = System is healthy.
+    - *Email Received 📧* = Deal found!
 
 ---
 
