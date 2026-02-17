@@ -71,7 +71,7 @@ class EcomScraper:
                 print("Potential Bot Block detected. Taking screenshot...")
                 screenshot = self.driver.get_screenshot_as_png()
                 data["debug_screenshot"] = screenshot
-            elif data.get("price") == "N/A":
+            elif not data.get("price") or data.get("price") == "N/A":
                 print("Price not found! Taking debug screenshot...")
                 screenshot = self.driver.get_screenshot_as_png()
                 data["debug_screenshot"] = screenshot
@@ -121,25 +121,33 @@ class EcomScraper:
             ".a-price .a-offscreen",                                          # Broadest fallback
         ]
         
-        price_tag = None
         matched_selector = None
         for selector in price_selectors:
-            price_tag = soup.select_one(selector)
-            if price_tag:
-                matched_selector = selector
-                break
+            tag = soup.select_one(selector)
+            if tag:
+                text = tag.get_text(strip=True)
+                # Only accept if text is non-empty AND contains at least one digit
+                if text and any(c.isdigit() for c in text):
+                    price_str = text
+                    matched_selector = selector
+                    print(f"✅ Price found via: {selector} -> '{price_str}'")
+                    break
+                else:
+                    print(f"⚠️ Selector '{selector}' matched but text was empty/invalid: '{text}'")
         
-        if price_tag:
-            price_str = price_tag.get_text(strip=True)
-            print(f"Price found via: {matched_selector} -> {price_str}")
-        else:
-             # Last resort: search for any currency symbol in text
-             text_price = soup.find(string=lambda t: t and ("₹" in t or "$" in t or "€" in t or "£" in t))
-             if text_price:
-                 price_str = text_price.strip()
-                 print(f"Price found via text search -> {price_str}")
-             else:
-                 print("WARNING: No price found with any selector!")
+        if not matched_selector:
+            # Last resort: search for ₹ symbol in any text node
+            text_price = soup.find(string=lambda t: t and "₹" in t and any(c.isdigit() for c in t))
+            if text_price:
+                price_str = text_price.strip()
+                print(f"✅ Price found via ₹ text search -> '{price_str}'")
+            else:
+                print("❌ WARNING: No price found with ANY selector!")
+                # Try to dump what price-related elements exist on the page
+                all_price_elements = soup.select(".a-price")
+                print(f"   Found {len(all_price_elements)} .a-price elements on page")
+                for i, el in enumerate(all_price_elements[:5]):
+                    print(f"   .a-price[{i}]: '{el.get_text(strip=True)[:50]}'")
 
         # Parse numeric value from the price string
         try:

@@ -160,7 +160,8 @@ def main():
         st.markdown(f'<div class="product-title">{data.get("name", "Unknown Product")}</div>', unsafe_allow_html=True)
         
         # Show debug info if price extraction failed
-        if data.get('price') == 'N/A' and 'debug_screenshot' in data:
+        price_val = data.get('price', 'N/A')
+        if (not price_val or price_val == 'N/A') and 'debug_screenshot' in data:
             st.warning("⚠️ Price could not be extracted for this product. The debug view below shows what the scraper sees.")
             with st.expander("🕵️ Debug View — Price not found", expanded=True):
                 st.image(data["debug_screenshot"], caption="Headless Browser Capture", use_container_width=True)
