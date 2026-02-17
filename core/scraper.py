@@ -16,45 +16,38 @@ class EcomScraper:
         """Initializes the Selenium WebDriver with anti-blocking options."""
         options = Options()
         
-        # Random User-Agent (CRITICAL for anti-bot)
-        user_agent = random.choice(USER_AGENTS)
-        options.add_argument(f"user-agent={user_agent}")
-        
-        # Common anti-detection options for ALL platforms
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--lang=en-US,en;q=0.9")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--log-level=3")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-        
-        # Check if running on Linux (Streamlit Cloud / GitHub Actions)
+        # Check if running on Linux (likely Streamlit Cloud / GitHub Actions)
         import platform
         if platform.system() == "Linux":
-            options.add_argument("--headless=new")  # new headless mode, harder to detect
+            options.add_argument("--headless")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument("--lang=en-US")
             
-            driver = webdriver.Chrome(options=options)
-        else:
-            if HEADLESS:
-                options.add_argument("--headless=new")
+            # On Streamlit Cloud/Linux, chromium and chromium-driver are installed via packages.txt
+            # We don't need webdriver_manager here, as it conflicts with the system driver.
+            return webdriver.Chrome(options=options)
             
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=options)
+        elif HEADLESS:
+            options.add_argument("--headless")
         
-        # CDP stealth: override navigator.webdriver to return undefined
-        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": """
-                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-                Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
-                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
-                window.chrome = {runtime: {}};
-            """
-        })
+        # Random User-Agent
+        user_agent = random.choice(USER_AGENTS)
+        options.add_argument(f"user-agent={user_agent}")
+        options.add_argument("--lang=en-US") # Add language header
         
-        return driver
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        
+        # Suppress logs
+        options.add_argument("--log-level=3")
+
+        # Use webdriver_manager to automatically handle the driver executable regarding usage on Windows/Mac
+        service = Service(ChromeDriverManager().install())
+        return webdriver.Chrome(service=service, options=options)
 
     def scrape_product(self, url):
         """Scrapes product details from a given URL."""
@@ -62,12 +55,9 @@ class EcomScraper:
             self.driver.get(url)
             self._random_delay()
             
-            # Wait for page to fully render (important on slow CI runners)
-            time.sleep(3)
-            
-            # Scroll to trigger lazy loading
+            # Simple scroll to trigger lazy loading
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
-            time.sleep(2)
+            time.sleep(1)
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(2)
             
