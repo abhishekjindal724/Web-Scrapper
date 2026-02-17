@@ -4,7 +4,7 @@ import os
 from core.scraper import EcomScraper
 from core.analyzer import DataAnalyzer
 
-st.set_page_config(page_title="E-com Intel Tool", page_icon="🛒", layout="wide")
+st.set_page_config(page_title="E-com Intel Pro", page_icon="🚀", layout="wide")
 
 def load_css(file_name):
     with open(file_name) as f:
@@ -13,62 +13,111 @@ def load_css(file_name):
 # Load Custom CSS
 load_css("style.css")
 
-def main():
-    # Hero Section
-    st.markdown("""
-        <div style='text-align: center; padding: 2rem 0;'>
-            <h1 class='title-animate' style='font-size: 3rem; margin-bottom: 0.5rem;'>🚀 E-com Intel <span style='color: #FF4B4B;'>Pro</span></h1>
-            <p style='color: #A0A0A0; font-size: 1.2rem;'>AI-Powered Price Tracking & Sentinel Analysis</p>
+def render_metric_card(icon, label, value, card_class, value_style=""):
+    """Renders a single premium metric card."""
+    style_attr = f' style="{value_style}"' if value_style else ''
+    st.markdown(f"""
+        <div class="metric-card {card_class}">
+            <span class="metric-icon">{icon}</span>
+            <div class="metric-label">{label}</div>
+            <div class="metric-value"{style_attr}>{value}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Input Section (Card Style)
-    st.markdown("<div style='background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;'>", unsafe_allow_html=True)
-    url = st.text_input("", placeholder="Paste Amazon Product URL here...", key="url_input", label_visibility="collapsed")
+def render_sentiment_bar(score):
+    """Renders a visual sentiment gauge bar."""
+    # score ranges from -1 to 1, map to 0-100%
+    position = int((score + 1) / 2 * 100)
+    position = max(5, min(95, position)) # clamp
+    
+    if score > 0.3:
+        label = "Positive 😊"
+        color = "#10B981"
+    elif score > -0.3:
+        label = "Neutral 😐"
+        color = "#F59E0B"
+    else:
+        label = "Negative 😞"
+        color = "#EF4444"
+    
+    st.markdown(f"""
+        <div class="sentiment-bar-container">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                <span style="color: #9CA3AF; font-size: 0.85rem;">Sentiment Analysis</span>
+                <span style="color: {color}; font-weight: 600; font-size: 0.9rem;">{label} ({score:.2f})</span>
+            </div>
+            <div class="sentiment-bar-bg">
+                <div class="sentiment-marker" style="left: {position}%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                <span style="color: #6B7280; font-size: 0.7rem;">Negative</span>
+                <span style="color: #6B7280; font-size: 0.7rem;">Neutral</span>
+                <span style="color: #6B7280; font-size: 0.7rem;">Positive</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+def main():
+    # Hero Section
+    st.markdown("""
+        <div class="hero-container">
+            <h1 class="hero-title">E-com Intel Pro</h1>
+            <p class="hero-subtitle">AI-Powered Price Tracking & Sentiment Analysis</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Search Bar
+    st.markdown('<div class="search-container">', unsafe_allow_html=True)
+    url = st.text_input("", placeholder="🔗  Paste any Amazon product URL...", key="url_input", label_visibility="collapsed")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         scrape_btn = st.button("🔍 Analyze Product", type="primary", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Initialize session state for data
+    # Initialize session state
     if "scraped_data" not in st.session_state:
         st.session_state.scraped_data = None
         st.session_state.current_url = ""
     
+    # Scrape Logic
     if scrape_btn:
         if not url:
-            st.warning("Please enter a URL first.")
+            st.warning("⚠️ Please enter a product URL first.")
         else:
             status_text = st.empty()
-            status_text.info("🚀 Initializing Scraper... (This may take a few seconds)")
+            progress_bar = st.progress(0)
             
-            # Initialize components
+            status_text.info("🚀 Initializing headless browser...")
+            progress_bar.progress(10)
+            
             scraper = None
             analyzer = DataAnalyzer()
             
             try:
                 scraper = EcomScraper()
-                status_text.info(f"Scraping {url}...")
+                progress_bar.progress(30)
+                status_text.info("🔍 Scraping product data...")
                 
                 data = scraper.scrape_product(url)
+                progress_bar.progress(70)
                 
                 if not data:
-                    status_text.error("Failed to scrape data. Check the URL.")
+                    progress_bar.empty()
+                    status_text.error("❌ Failed to scrape data. Check the URL and try again.")
                 elif data.get("name") == "Unknown Product":
-                    status_text.warning("⚠️ Amazon blocked the request (Anti-Bot). Try again in a few seconds or use a different product.")
+                    progress_bar.empty()
+                    status_text.warning("🛡️ Amazon blocked this request. Try again in 60 seconds or use a different product.")
                     
-                    # Show Debug Screenshot if available
                     if "debug_screenshot" in data:
-                        st.subheader("🕵️ Debug View (What the scraper sees):")
-                        st.image(data["debug_screenshot"], caption="Headless Browser View", use_container_width=True)
+                        with st.expander("🕵️ Debug View — What the scraper sees"):
+                            st.image(data["debug_screenshot"], caption="Headless Browser Capture", use_container_width=True)
                     
                     st.session_state.scraped_data = data
                     st.session_state.current_url = url
                 else:
-                    status_text.success("Scraping Complete!")
-                    time.sleep(0.5)
-                    status_text.empty()
-
+                    status_text.info("🧠 Analyzing sentiment...")
+                    progress_bar.progress(85)
+                    
                     reviews = data.get('reviews', [])
                     sentiment_score = 0.0
                     if reviews:
@@ -78,7 +127,10 @@ def main():
                     
                     st.session_state.scraped_data = data
                     st.session_state.current_url = url
-
+                    
+                    progress_bar.progress(95)
+                    
+                    # Save to database
                     try:
                         from core.database_manager import DatabaseManager
                         db = DatabaseManager()
@@ -87,78 +139,85 @@ def main():
                             db.insert_product(data)
                             db.close()
                     except Exception as e:
-                        st.error(f"Failed to save data: {e}")
+                        st.toast(f"DB: {e}", icon="⚠️")
+                    
+                    progress_bar.progress(100)
+                    time.sleep(0.3)
+                    progress_bar.empty()
+                    status_text.empty()
 
             except Exception as e:
-                st.error(f"Error: {e}")
+                progress_bar.empty()
+                st.error(f"❌ Error: {e}")
             finally:
                 if scraper:
                     scraper.close()
 
-    # Display Results (Outside button block, depends on session state)
+    # ===== RESULTS DISPLAY =====
     if st.session_state.scraped_data:
         data = st.session_state.scraped_data
         current_url = st.session_state.current_url
         
-        st.markdown(f"### {data.get('name', 'Unknown Product')}")
+        # Product Title
+        st.markdown(f'<div class="product-title">{data.get("name", "Unknown Product")}</div>', unsafe_allow_html=True)
         
-        # Modern Metric Cards
-        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        # Metric Cards Row
+        m1, m2, m3, m4 = st.columns(4)
         
-        with m_col1:
-            st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-label">Price</div>
-                    <div class="metric-value">{data.get('price', 'N/A')}</div>
-                </div>
-            """, unsafe_allow_html=True)
+        price_display = data.get('price', 'N/A')
+        rating_display = data.get('rating', 'N/A')
+        # Clean up rating display
+        if rating_display and 'out of' in str(rating_display):
+            rating_display = str(rating_display).split(' out')[0]
+            rating_display += " ⭐"
+        
+        status_display = data.get('availability', 'Unknown')
+        if 'stock' in str(status_display).lower():
+            status_display = "In Stock"
+            status_style = "color: #10B981;"
+        elif 'unavailable' in str(status_display).lower():
+            status_display = "Unavailable"
+            status_style = "color: #EF4444;"
+        else:
+            status_style = ""
             
-        with m_col2:
-            st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-label">Rating</div>
-                    <div class="metric-value">{data.get('rating', 'N/A')}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-        with m_col3:
-            st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-label">Status</div>
-                    <div class="metric-value" style="font-size: 1.2rem;">{data.get('availability', 'Unknown')}</div>
-                </div>
-            """, unsafe_allow_html=True)
+        s_score = data.get('sentiment_score', 0.0)
+        s_color = "#10B981" if s_score > 0.3 else ("#F59E0B" if s_score > -0.3 else "#EF4444")
+        
+        with m1:
+            render_metric_card("💰", "Price", price_display, "price")
+        with m2:
+            render_metric_card("⭐", "Rating", rating_display, "rating") 
+        with m3:
+            render_metric_card("📦", "Status", status_display, "status", status_style)
+        with m4:
+            render_metric_card("🧠", "Sentiment", f"{s_score:.2f}", "sentiment", f"color: {s_color};")
+        
+        # Sentiment Bar
+        st.markdown("")  # spacer
+        render_sentiment_bar(s_score)
 
-        with m_col4:
-            s_score = data.get('sentiment_score', 0.0)
-            color = "#00FF00" if s_score > 0 else "#FF4B4B"
-            st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-label">Sentiment</div>
-                    <div class="metric-value" style="color: {color};">{s_score:.2f}</div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        # --- Price Alert Section ---
+        # ===== PRICE ALERT Section =====
         st.divider()
-        st.subheader("🔔 Set Price Alert")
+        st.markdown('<div class="section-header"><span class="icon">🔔</span> Set Price Alert</div>', unsafe_allow_html=True)
+        
         with st.form("alert_form"):
-            col_alert1, col_alert2 = st.columns(2)
-            with col_alert1:
+            a1, a2 = st.columns(2)
+            with a1:
                 target_price = st.number_input("Target Price (₹)", min_value=1.0, step=10.0)
-            with col_alert2:
+            with a2:
                 email = st.text_input("Your Email")
             
-            submitted = st.form_submit_button("Set Alert")
+            submitted = st.form_submit_button("🔔 Set Alert", use_container_width=True)
             if submitted:
                 if email and target_price > 0:
                     try:
                         from core.database_manager import DatabaseManager
                         db_alert = DatabaseManager()
                         if db_alert.connect():
-                            db_alert.create_tables() # Ensure tables exist
+                            db_alert.create_tables()
                             if db_alert.add_alert(current_url, float(target_price), email):
-                                st.success(f"Alert set for ₹{target_price} to {email}!")
+                                st.success(f"✅ Alert set! You'll be emailed when price drops to ₹{target_price:.0f}")
                             else:
                                 st.error("Failed to save alert.")
                             db_alert.close()
@@ -169,21 +228,81 @@ def main():
                 else:
                     st.warning("Please enter a valid email and target price.")
 
-        # Reviews Section
+        # ===== REVIEWS Section =====
         st.divider()
         reviews = data.get('reviews', [])
-        st.subheader(f"📝 Reviews ({len(reviews)})")
+        st.markdown(f'<div class="section-header"><span class="icon">💬</span> Customer Reviews ({len(reviews)})</div>', unsafe_allow_html=True)
         
         if reviews:
             for i, review in enumerate(reviews):
-                with st.expander(f"Review #{i+1}"):
-                    st.write(review)
+                st.markdown(f"""
+                    <div class="review-card">
+                        <div class="review-number">Review #{i+1}</div>
+                        <div class="review-text">{review}</div>
+                    </div>
+                """, unsafe_allow_html=True)
         else:
-            st.info("No reviews extracted matching criteria.")
+            st.markdown("""
+                <div style="text-align: center; padding: 2rem; color: #6B7280;">
+                    <p style="font-size: 2rem;">📝</p>
+                    <p>No reviews extracted. Reviews may require scrolling or a dedicated reviews page.</p>
+                </div>
+            """, unsafe_allow_html=True)
 
-        # Raw Data Section
-        with st.expander("📊 View Raw Data (JSON)"):
+        # Raw Data
+        with st.expander("📊 Raw Scraped Data (JSON)"):
             st.json(data)
+    
+    else:
+        # ===== EMPTY STATE =====
+        st.markdown("""
+            <div class="empty-state">
+                <div class="big-icon">🔍</div>
+                <h3>Ready to Analyze</h3>
+                <p>Paste an Amazon product URL above and click "Analyze Product" to get started.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Feature cards
+        f1, f2, f3 = st.columns(3)
+        with f1:
+            st.markdown("""
+                <div class="metric-card price" style="text-align: center;">
+                    <span class="metric-icon">🕵️</span>
+                    <div class="metric-label">Smart Scraping</div>
+                    <div style="color: #9CA3AF; font-size: 0.85rem; margin-top: 0.5rem;">
+                        Bypasses anti-bot protections with stealth headers
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        with f2:
+            st.markdown("""
+                <div class="metric-card rating" style="text-align: center;">
+                    <span class="metric-icon">🧠</span>
+                    <div class="metric-label">AI Analysis</div>
+                    <div style="color: #9CA3AF; font-size: 0.85rem; margin-top: 0.5rem;">
+                        NLP sentiment analysis on customer reviews
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        with f3:
+            st.markdown("""
+                <div class="metric-card status" style="text-align: center;">
+                    <span class="metric-icon">📧</span>
+                    <div class="metric-label">Price Alerts</div>
+                    <div style="color: #9CA3AF; font-size: 0.85rem; margin-top: 0.5rem;">
+                        Automated email when prices drop to your target
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+    
+    # Footer
+    st.markdown("""
+        <div class="footer">
+            Built with ❤️ using Python, Selenium & Streamlit · 
+            <a href="https://github.com" target="_blank">View on GitHub</a>
+        </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

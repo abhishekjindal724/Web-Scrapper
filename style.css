@@ -1,87 +1,410 @@
-/* Global Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+/* ===== PREMIUM E-COM INTEL PRO THEME ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+/* ===== GLOBAL RESET ===== */
+html,
+body,
+[class*="css"] {
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* Glassmorphism Card Style */
+/* ===== APP BACKGROUND ===== */
 .stApp {
-    background-color: #0E1117; /* Dark background */
-    background-image: radial-gradient(circle at 50% 50%, #1E2329 0%, #0E1117 100%);
-    background-attachment: fixed;
+    background: #0a0e17 !important;
 }
 
-div.stButton > button:first-child {
-    background: linear-gradient(90deg, #FF4B4B 0%, #FF914D 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0.6rem 1.2rem;
-    font-weight: 600;
-    transition: transform 0.2s, box-shadow 0.2s;
+/* Animated gradient orbs (background decoration) */
+.stApp::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 75, 75, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(0, 200, 150, 0.08) 0%, transparent 50%);
+    animation: orbFloat 20s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
 }
 
-div.stButton > button:first-child:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
+@keyframes orbFloat {
+
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    33% {
+        transform: translate(30px, -30px) rotate(120deg);
+    }
+
+    66% {
+        transform: translate(-20px, 20px) rotate(240deg);
+    }
 }
 
-/* Custom Metric Card */
-.metric-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+/* ===== HEADER STYLES ===== */
+.hero-container {
     text-align: center;
-    transition: transform 0.2s;
+    padding: 2.5rem 1rem 1.5rem;
+    position: relative;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 25%, #FED330 50%, #45B7D1 75%, #A855F7 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+
+    0%,
+    100% {
+        background-position: 0% center;
+    }
+
+    50% {
+        background-position: 100% center;
+    }
+}
+
+.hero-subtitle {
+    color: #6B7280;
+    font-size: 1.05rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+/* ===== SEARCH BAR ===== */
+.search-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 0 auto 2rem;
+    max-width: 800px;
+    backdrop-filter: blur(20px);
+}
+
+.stTextInput>div>div>input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: #e2e8f0 !important;
+    padding: 0.8rem 1rem !important;
+    font-size: 0.95rem !important;
+    transition: border-color 0.3s, box-shadow 0.3s !important;
+}
+
+.stTextInput>div>div>input:focus {
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1) !important;
+}
+
+.stTextInput>div>div>input::placeholder {
+    color: #4B5563 !important;
+}
+
+/* ===== PRIMARY BUTTON ===== */
+div.stButton>button[kind="primary"] {
+    background: linear-gradient(135deg, #A855F7 0%, #6366F1 50%, #3B82F6 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+}
+
+div.stButton>button[kind="primary"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* ===== METRIC CARDS ===== */
+.metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 1.5rem 1.2rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
 }
 
 .metric-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.metric-card.price::before {
+    background: linear-gradient(90deg, #10B981, #34D399);
+}
+
+.metric-card.rating::before {
+    background: linear-gradient(90deg, #F59E0B, #FBBF24);
+}
+
+.metric-card.status::before {
+    background: linear-gradient(90deg, #3B82F6, #60A5FA);
+}
+
+.metric-card.sentiment::before {
+    background: linear-gradient(90deg, #A855F7, #C084FC);
+}
+
+.metric-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .metric-label {
-    font-size: 0.9rem;
-    color: #A0A0A0;
+    font-size: 0.75rem;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #F3F4F6;
+    line-height: 1.2;
+}
+
+/* ===== PRODUCT TITLE ===== */
+.product-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #E5E7EB;
+    line-height: 1.5;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #E5E7EB;
+}
+
+.section-header .icon {
+    font-size: 1.3rem;
+}
+
+/* ===== SENTIMENT BAR ===== */
+.sentiment-bar-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sentiment-bar-bg {
+    height: 12px;
+    background: linear-gradient(90deg, #EF4444 0%, #F59E0B 50%, #10B981 100%);
+    border-radius: 999px;
+    position: relative;
+    overflow: visible;
+}
+
+.sentiment-marker {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 2px solid #1F2937;
+}
+
+/* ===== REVIEW CARDS ===== */
+.review-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 0.8rem;
+    transition: background 0.2s;
+}
+
+.review-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.review-number {
+    font-size: 0.75rem;
+    color: #A855F7;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 0.5rem;
 }
 
-.metric-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #FFFFFF;
+.review-text {
+    color: #D1D5DB;
+    font-size: 0.9rem;
+    line-height: 1.6;
 }
 
-/* Input Fields */
-.stTextInput > div > div > input {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 8px;
+/* ===== ALERT FORM ===== */
+.stNumberInput>div>div>input,
+.stTextInput input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    color: #e2e8f0 !important;
 }
 
-/* Header Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Form submit button */
+.stFormSubmitButton>button {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s !important;
 }
 
-.title-animate {
-    animation: fadeIn 0.8s ease-out;
+.stFormSubmitButton>button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
 }
 
-/* Mobile Optimizations */
-@media (max-width: 640px) {
-    .metric-value {
-        font-size: 1.4rem;
+/* ===== DIVIDERS ===== */
+hr {
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent) !important;
+    margin: 2rem 0 !important;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #4B5563;
+}
+
+.empty-state .big-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: #6B7280;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #4B5563;
+    font-size: 0.9rem;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: #4B5563;
+    font-size: 0.8rem;
+}
+
+.footer a {
+    color: #A855F7;
+    text-decoration: none;
+}
+
+/* ===== ALERTS / INFO BOXES ===== */
+.stAlert {
+    border-radius: 12px !important;
+}
+
+/* ===== EXPANDER ===== */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 10px !important;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
     }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .metric-value {
+        font-size: 1.3rem;
+    }
+
     .metric-card {
+        padding: 1rem 0.8rem;
+    }
+
+    .metric-label {
+        font-size: 0.65rem;
+    }
+
+    .search-container {
         padding: 1rem;
+    }
+
+    .product-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.6rem;
+    }
+
+    .metric-value {
+        font-size: 1.1rem;
+    }
+
+    .metric-icon {
+        font-size: 1.5rem;
     }
 }

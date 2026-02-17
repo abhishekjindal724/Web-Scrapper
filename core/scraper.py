@@ -100,44 +100,39 @@ class EcomScraper:
                 hidden.decompose()
             title = title_tag.get_text(strip=True)
             
-        # 2. Price (Amazon specific complex logic)
-        # 2. Price (Amazon specific complex logic)
+        # 2. Price — scoped to the MAIN price container (not variant thumbnails)
         price_str = "N/A"
         price_val = 0.0
         
-        # Try finding the 'offscreen' price which is hidden but contains the correct value
-        # Also check for range price (e.g., "1,000 - 2,000")
-        price_tag = soup.select_one(".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice, .price, .a-size-medium.a-color-price")
+        # Priority chain: scope to the main price display first
+        price_selectors = [
+            "#corePriceDisplay_desktop_feature_div .a-price .a-offscreen",  # New Amazon layout
+            "#corePrice_feature_div .a-price .a-offscreen",                 # Older Amazon layout
+            "#priceblock_ourprice",                                          # Legacy
+            "#priceblock_dealprice",                                         # Legacy deal
+            ".a-price .a-offscreen",                                         # Broadest fallback
+        ]
+        
+        price_tag = None
+        for selector in price_selectors:
+            price_tag = soup.select_one(selector)
+            if price_tag:
+                break
         
         if price_tag:
             price_str = price_tag.get_text(strip=True)
         else:
-             # Fallback
+             # Last resort: search for any currency symbol in text
              text_price = soup.find(string=lambda t: t and ("$" in t or "€" in t or "£" in t or "₹" in t))
              if text_price:
                  price_str = text_price.strip()
 
-        # Parse numeric value
+        # Parse numeric value from the price string
         try:
-            # Remove currency symbols and commas
-            clean_str = "".join(c for c in price_str if c.isdigit() or c == '.' or c == '-')
-            
-            if '-' in clean_str:
-                # Handle range: "1000-2000" -> take lower bound
-                parts = clean_str.split('-')
-                price_val = float(parts[0]) if parts[0] else 0.0
-            else:
-                price_val = float(clean_str) if clean_str else 0.0
+            clean_str = "".join(c for c in price_str if c.isdigit() or c == '.')
+            price_val = float(clean_str) if clean_str else 0.0
         except:
             price_val = 0.0
-
-        # Refine display string to show range if detected
-        range_tag = soup.select_one(".a-price-range")
-        if range_tag:
-             # If a range exists, prefer that for display text
-             range_text = range_tag.get_text(strip=True)
-             # Basic cleanup to remove hidden "from" text
-             price_str = range_text.replace("From", "").strip()
 
         # 3. Availability
         avail_tag = soup.select_one("#availability, .availability")
