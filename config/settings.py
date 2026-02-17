@@ -1,24 +1,22 @@
 import os
 
-import streamlit as st
+# Try to load from Streamlit secrets first (for Streamlit Cloud),
+# then fall back to environment variables (for GitHub Actions / local runs)
 
-# Database Configuration
-# NOTE: Update these with your actual MySQL credentials
 try:
+    import streamlit as st
     DB_HOST = st.secrets["DB_HOST"]
     DB_USER = st.secrets["DB_USER"]
     DB_PASSWORD = st.secrets["DB_PASSWORD"]
     DB_NAME = st.secrets["DB_NAME"]
-except (FileNotFoundError, KeyError):
-    # Use environment variables or empty strings (for safety)
+except Exception:
+    # Catches: ImportError, StreamlitAPIException, KeyError, FileNotFoundError, etc.
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_USER = os.getenv("DB_USER", "root")
-    # DB_PASSWORD should be set in .env or secrets!
     DB_PASSWORD = os.getenv("DB_PASSWORD", "") 
     DB_NAME = os.getenv("DB_NAME", "ecommerce_db")
     
 # SSL Configuration (Required for most Cloud DBs like TiDB/Aiven)
-# We will pass this to mysql.connector
 DB_SSL = {"ssl_disabled": False} if os.getenv("DB_SSL", "True") == "True" else {}
 
 # Scraper Configuration
@@ -36,9 +34,10 @@ HEADLESS = True
 
 # Email Credentials
 try:
+    import streamlit as st
     EMAIL_SENDER = st.secrets.get("EMAIL_SENDER", "abhishekjindal724@gmail.com")
     EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
-except (FileNotFoundError, KeyError):
-    EMAIL_SENDER = "abhishekjindal724@gmail.com"
-    # Password removed for security. Set 'EMAIL_PASSWORD' in secrets.toml or environment variables.
+except Exception:
+    EMAIL_SENDER = os.getenv("EMAIL_SENDER", "abhishekjindal724@gmail.com")
     EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+
