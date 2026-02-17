@@ -71,6 +71,10 @@ class EcomScraper:
                 print("Potential Bot Block detected. Taking screenshot...")
                 screenshot = self.driver.get_screenshot_as_png()
                 data["debug_screenshot"] = screenshot
+            elif data.get("price") == "N/A":
+                print("Price not found! Taking debug screenshot...")
+                screenshot = self.driver.get_screenshot_as_png()
+                data["debug_screenshot"] = screenshot
             
             data["reviews"] = self._scrape_reviews(soup)
             return data
@@ -104,28 +108,38 @@ class EcomScraper:
         price_str = "N/A"
         price_val = 0.0
         
-        # Priority chain: scope to the main price display first
+        # Priority chain: most specific → broadest fallback
         price_selectors = [
-            "#corePriceDisplay_desktop_feature_div .a-price .a-offscreen",  # New Amazon layout
-            "#corePrice_feature_div .a-price .a-offscreen",                 # Older Amazon layout
-            "#priceblock_ourprice",                                          # Legacy
-            "#priceblock_dealprice",                                         # Legacy deal
-            ".a-price .a-offscreen",                                         # Broadest fallback
+            ".priceToPay .a-offscreen",                                       # Modern Amazon.in (variant pages)
+            "#corePriceDisplay_desktop_feature_div .a-price .a-offscreen",    # New desktop layout
+            "#corePrice_feature_div .a-price .a-offscreen",                   # Older desktop layout  
+            "#tp_price_block_total_price_ww .a-offscreen",                    # Total price block
+            "#price_inside_buybox",                                           # Buy box price
+            "#newBuyBoxPrice",                                                # New buy box
+            "#priceblock_ourprice",                                           # Legacy
+            "#priceblock_dealprice",                                          # Legacy deal
+            ".a-price .a-offscreen",                                          # Broadest fallback
         ]
         
         price_tag = None
+        matched_selector = None
         for selector in price_selectors:
             price_tag = soup.select_one(selector)
             if price_tag:
+                matched_selector = selector
                 break
         
         if price_tag:
             price_str = price_tag.get_text(strip=True)
+            print(f"Price found via: {matched_selector} -> {price_str}")
         else:
              # Last resort: search for any currency symbol in text
-             text_price = soup.find(string=lambda t: t and ("$" in t or "€" in t or "£" in t or "₹" in t))
+             text_price = soup.find(string=lambda t: t and ("₹" in t or "$" in t or "€" in t or "£" in t))
              if text_price:
                  price_str = text_price.strip()
+                 print(f"Price found via text search -> {price_str}")
+             else:
+                 print("WARNING: No price found with any selector!")
 
         # Parse numeric value from the price string
         try:

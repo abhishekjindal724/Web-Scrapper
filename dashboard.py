@@ -67,12 +67,10 @@ def main():
     """, unsafe_allow_html=True)
 
     # Search Bar
-    st.markdown('<div class="search-container">', unsafe_allow_html=True)
     url = st.text_input("", placeholder="🔗  Paste any Amazon product URL...", key="url_input", label_visibility="collapsed")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         scrape_btn = st.button("🔍 Analyze Product", type="primary", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Initialize session state
     if "scraped_data" not in st.session_state:
@@ -160,6 +158,12 @@ def main():
         
         # Product Title
         st.markdown(f'<div class="product-title">{data.get("name", "Unknown Product")}</div>', unsafe_allow_html=True)
+        
+        # Show debug info if price extraction failed
+        if data.get('price') == 'N/A' and 'debug_screenshot' in data:
+            st.warning("⚠️ Price could not be extracted for this product. The debug view below shows what the scraper sees.")
+            with st.expander("🕵️ Debug View — Price not found", expanded=True):
+                st.image(data["debug_screenshot"], caption="Headless Browser Capture", use_container_width=True)
         
         # Metric Cards Row
         m1, m2, m3, m4 = st.columns(4)
