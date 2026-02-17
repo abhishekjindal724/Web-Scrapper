@@ -26,9 +26,9 @@ class EcomScraper:
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_argument("--lang=en-US")
+            options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
             
             # On Streamlit Cloud/Linux, chromium and chromium-driver are installed via packages.txt
-            # We don't need webdriver_manager here, as it conflicts with the system driver.
             return webdriver.Chrome(options=options)
             
         elif HEADLESS:
