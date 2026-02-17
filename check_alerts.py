@@ -39,18 +39,23 @@ def check_alerts_once():
                 if not data:
                     continue
                     
-                current_price_str = data.get('price', '0')
-                # cleanup price (remove currency symbols)
-                clean_price = "".join(c for c in current_price_str if c.isdigit() or c == '.')
+                # Use robust numeric price from scraper (handles ranges safely)
+                current_price = data.get('price_numeric', 0.0)
                 
-                if not clean_price:
-                    continue
-                    
-                current_price = float(clean_price)
+                # Fallback for old scraper versions or failures
+                if not current_price:
+                    current_price_str = data.get('price', '0')
+                    # cleanup price (remove currency symbols)
+                    clean_price = "".join(c for c in current_price_str if c.isdigit() or c == '.')
+                    try:
+                        current_price = float(clean_price)
+                    except:
+                        current_price = 0.0
+
                 product_name = data.get('name', 'Unknown Product')
                 
                 # Check condition (Price Drop)
-                if current_price <= float(target_price):
+                if current_price > 0 and current_price <= float(target_price):
                     print(f"📉 Price Drop: {current_price} <= Target: {target_price}")
                     
                     # Try to send email

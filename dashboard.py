@@ -1,22 +1,41 @@
 import streamlit as st
 import time
+import os
 from core.scraper import EcomScraper
 from core.analyzer import DataAnalyzer
 
 st.set_page_config(page_title="E-com Intel Tool", page_icon="🛒", layout="wide")
 
-def main():
-    st.title("🛒 AI-Ready E-commerce Intelligence Tool")
-    st.markdown("Enter a product URL (""Amazon preferred"") to extract data, reviews, and sentiment analysis.")
+def load_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    # Input Section
-    url = st.text_input("Product URL", placeholder="https://www.amazon.in/...", key="url_input")
+# Load Custom CSS
+load_css("style.css")
+
+def main():
+    # Hero Section
+    st.markdown("""
+        <div style='text-align: center; padding: 2rem 0;'>
+            <h1 class='title-animate' style='font-size: 3rem; margin-bottom: 0.5rem;'>🚀 E-com Intel <span style='color: #FF4B4B;'>Pro</span></h1>
+            <p style='color: #A0A0A0; font-size: 1.2rem;'>AI-Powered Price Tracking & Sentinel Analysis</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Input Section (Card Style)
+    st.markdown("<div style='background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;'>", unsafe_allow_html=True)
+    url = st.text_input("", placeholder="Paste Amazon Product URL here...", key="url_input", label_visibility="collapsed")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        scrape_btn = st.button("🔍 Analyze Product", type="primary", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
     
     # Initialize session state for data
     if "scraped_data" not in st.session_state:
         st.session_state.scraped_data = None
+        st.session_state.current_url = ""
     
-    if st.button("Scrape & Analyze", type="primary"):
+    if scrape_btn:
         if not url:
             st.warning("Please enter a URL first.")
         else:
@@ -81,19 +100,44 @@ def main():
         data = st.session_state.scraped_data
         current_url = st.session_state.current_url
         
-        # Header Metrics
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Price", data.get('price', 'N/A'))
-        with col2:
-            st.metric("Rating", data.get('rating', 'N/A'))
-        with col3:
-            st.metric("Availability", data.get('availability', 'Unknown'))
-        with col4:
-            sentiment_score = data.get('sentiment_score', 0.0)
-            st.metric("Sentiment Score", f"{sentiment_score:.2f}", delta="Positive" if sentiment_score > 0 else "Neutral/Negative")
+        st.markdown(f"### {data.get('name', 'Unknown Product')}")
+        
+        # Modern Metric Cards
+        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        
+        with m_col1:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Price</div>
+                    <div class="metric-value">{data.get('price', 'N/A')}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        with m_col2:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Rating</div>
+                    <div class="metric-value">{data.get('rating', 'N/A')}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        with m_col3:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Status</div>
+                    <div class="metric-value" style="font-size: 1.2rem;">{data.get('availability', 'Unknown')}</div>
+                </div>
+            """, unsafe_allow_html=True)
 
-        st.subheader(data.get('name', 'Unknown Product'))
+        with m_col4:
+            s_score = data.get('sentiment_score', 0.0)
+            color = "#00FF00" if s_score > 0 else "#FF4B4B"
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Sentiment</div>
+                    <div class="metric-value" style="color: {color};">{s_score:.2f}</div>
+                </div>
+            """, unsafe_allow_html=True)
 
         # --- Price Alert Section ---
         st.divider()

@@ -1,0 +1,87 @@
+/* Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Glassmorphism Card Style */
+.stApp {
+    background-color: #0E1117; /* Dark background */
+    background-image: radial-gradient(circle at 50% 50%, #1E2329 0%, #0E1117 100%);
+    background-attachment: fixed;
+}
+
+div.stButton > button:first-child {
+    background: linear-gradient(90deg, #FF4B4B 0%, #FF914D 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+div.stButton > button:first-child:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
+}
+
+/* Custom Metric Card */
+.metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #A0A0A0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+/* Input Fields */
+.stTextInput > div > div > input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 8px;
+}
+
+/* Header Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.title-animate {
+    animation: fadeIn 0.8s ease-out;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+    .metric-value {
+        font-size: 1.4rem;
+    }
+    .metric-card {
+        padding: 1rem;
+    }
+}
